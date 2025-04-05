@@ -37,11 +37,15 @@ interface ChatStore {
   chats: Chat[];
   loading: boolean;
   error: string | null;
+  currentChatId: string | null;
   fetchChats: () => Promise<void>;
-  createChat: (name: string) => Promise<void>;
+  createChat: (name: string) => Promise<Chat>;
   deleteChat: (chatId: string) => Promise<void>;
   fetchMessages: (chatId: string) => Promise<void>;
   sendMessage: (chatId: string, content: string) => Promise<void>;
+  likeMessage: (messageId: string) => Promise<void>;
+  dislikeMessage: (messageId: string) => Promise<void>;
+  setCurrentChatId: (chatId: string | null) => void;
 }
 
 type ChatStorePersist = ChatStore & {
@@ -54,7 +58,10 @@ export const useChatStore = create<ChatStorePersist>()(
       chats: [],
       loading: false,
       error: null,
+      currentChatId: null,
       _hasHydrated: false,
+
+      setCurrentChatId: (chatId: string | null) => set({ currentChatId: chatId }),
 
       fetchChats: async () => {
         set({ loading: true, error: null });
@@ -86,9 +93,12 @@ export const useChatStore = create<ChatStorePersist>()(
           
           if (!response.ok) throw new Error('Failed to create chat');
           const data = await response.json();
-          set((state) => ({ chats: [...state.chats, data.chat], loading: false }));
+          const newChat = data.chat;
+          set((state) => ({ chats: [...state.chats, newChat], loading: false }));
+          return newChat;
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Unknown error', loading: false });
+          throw error;
         }
       },
 
@@ -141,6 +151,31 @@ export const useChatStore = create<ChatStorePersist>()(
       sendMessage: async (chatId: string, content: string) => {
         set({ loading: true, error: null });
         try {
+          // Создаем временное сообщение пользователя
+          const userMessage: Message = {
+            id: `temp-${Date.now()}`,
+            chat_id: chatId,
+            content,
+            is_user: true,
+            timestamp: new Date().toISOString(),
+            likes: false,
+            dislikes: false,
+            sources: [],
+            chat_new_name: null
+          };
+
+          // Добавляем сообщение пользователя в состояние
+          set((state) => ({
+            chats: state.chats.map((chat) => 
+              chat.id === chatId 
+                ? { 
+                    ...chat, 
+                    messages: [...(chat.messages || []), userMessage] 
+                  } 
+                : chat
+            )
+          }));
+
           const response = await fetch(`http://wtfvibe.ru:8008/chats/${chatId}/messages?content=${encodeURIComponent(content)}`, {
             method: 'POST',
           });
@@ -153,6 +188,7 @@ export const useChatStore = create<ChatStorePersist>()(
           if (response.status !== 201) throw new Error('Failed to send message');
           const newMessage = await response.json();
           
+          // Обновляем состояние с ответом ассистента
           set((state) => ({
             chats: state.chats.map((chat) => 
               chat.id === chatId 
@@ -163,6 +199,79 @@ export const useChatStore = create<ChatStorePersist>()(
                 : chat
             ),
             loading: false
+          }));
+        } catch (error) {
+          set({ error: error instanceof Error ? error.message : 'Unknown error', loading: false });
+          // Удаляем временное сообщение пользователя в случае ошибки
+          set((state) => ({
+            chats: state.chats.map((chat) => 
+              chat.id === chatId 
+                ? { 
+                    ...chat, 
+                    messages: chat.messages?.filter(msg => msg.id !== `temp-${Date.now()}`) || [] 
+                  } 
+                : chat
+            )
+          }));
+        }
+      },
+
+      likeMessage: async (messageId: string) => {
+        set({ loading: true, error: null });
+        try {
+          const response = await fetch(`http://wtfvibe.ru:8008/messages/${messageId}/like`, {
+            method: 'PUT',
+          });
+          
+          if (response.status === 400) {
+            const errorData: ErrorResponse = await response.json();
+            throw new Error(errorData.detail);
+          }
+          
+          if (!response.ok) throw new Error('Failed to like message');
+          
+          // Обновляем состояние сообщения в хранилище
+          set((state) => ({
+            chats: state.chats.map((chat) => ({
+              ...chat,
+              messages: chat.messages?.map((message) =>
+                message.id === messageId
+                  ? { ...message, likes: true, dislikes: false }
+                  : message
+              ),
+            })),
+            loading: false,
+          }));
+        } catch (error) {
+          set({ error: error instanceof Error ? error.message : 'Unknown error', loading: false });
+        }
+      },
+
+      dislikeMessage: async (messageId: string) => {
+        set({ loading: true, error: null });
+        try {
+          const response = await fetch(`http://wtfvibe.ru:8008/messages/${messageId}/dislike`, {
+            method: 'PUT',
+          });
+          
+          if (response.status === 400) {
+            const errorData: ErrorResponse = await response.json();
+            throw new Error(errorData.detail);
+          }
+          
+          if (!response.ok) throw new Error('Failed to dislike message');
+          
+          // Обновляем состояние сообщения в хранилище
+          set((state) => ({
+            chats: state.chats.map((chat) => ({
+              ...chat,
+              messages: chat.messages?.map((message) =>
+                message.id === messageId
+                  ? { ...message, likes: false, dislikes: true }
+                  : message
+              ),
+            })),
+            loading: false,
           }));
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Unknown error', loading: false });
