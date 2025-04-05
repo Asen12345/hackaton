@@ -38,6 +38,33 @@ $nav-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   }
 }
 
+.imageButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 8px;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  &.active {
+    background-color: #E7EEF7;
+    border: 2px solid #264B82;
+    
+    img {
+      filter: brightness(0) saturate(100%) invert(30%) sepia(50%) saturate(2000%) hue-rotate(200deg) brightness(90%) contrast(90%);
+    }
+  }
+}
+
 .voiceButton {
   background: none;
   border: none;
@@ -49,9 +76,17 @@ $nav-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-left: 8px;
 
   &:hover {
     background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  &.recording {
+    width: auto;
+    height: auto;
+    padding: 5px;
+    border-radius: 5px;
   }
 }
 
@@ -70,6 +105,41 @@ $nav-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 
   &:hover {
     background-color: darken(#F8FBFF, 5%);
+  }
+}
+
+.recordingIndicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.recordingDot {
+  width: 8px;
+  height: 8px;
+  background-color: red;
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+
+.recordingTime {
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
   }
 }
 

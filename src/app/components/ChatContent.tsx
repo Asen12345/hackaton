@@ -1,21 +1,58 @@
 import styles from './ChatContent.module.scss';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useChatStore } from '../store/chatStore';
 import { Scrollbar } from 'react-scrollbars-custom';
+import { VoiceRecorder } from '../utils/voiceRecorder';
 
 export default function ChatContent() {
   const [inputValue, setInputValue] = useState('');
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
+  const [seconds, setSeconds] = useState(0);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const voiceRecorderRef = useRef<VoiceRecorder | null>(null);
+
   const { chats, loading, error, sendMessage, likeMessage, dislikeMessage, renameChat } = useChatStore();
   const currentChatId = useChatStore((state) => state.currentChatId);
   const currentChat = chats.find(chat => chat.id === currentChatId);
 
-  const handleSendMessage = async () => {
-    if (inputValue.trim() && currentChat) {
-      const response = await sendMessage(currentChat.id, inputValue);
-      setInputValue('');
+  useEffect(() => {
+    voiceRecorderRef.current = new VoiceRecorder(
+      (newSeconds) => setSeconds(newSeconds),
+      (blob) => setRecordedBlob(blob)
+    );
 
-      // Проверяем, есть ли новое название чата в ответе ассистента
+    return () => {
+      if (voiceRecorderRef.current) {
+        voiceRecorderRef.current.cleanup();
+      }
+    };
+  }, []);
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if ((inputValue.trim() || selectedImage || recordedBlob) && currentChat) {
+      const response = await sendMessage(
+        currentChat.id, 
+        inputValue, 
+        selectedImage || undefined, 
+        recordedBlob || undefined
+      );
+      setInputValue('');
+      setSelectedImage(null);
+      setRecordedBlob(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+
       if (response && response.chat_new_name) {
         await renameChat(currentChat.id, response.chat_new_name);
       }
@@ -26,6 +63,30 @@ export default function ChatContent() {
     if (e.key === 'Enter') {
       handleSendMessage();
     }
+  };
+
+  const startRecording = async () => {
+    if (voiceRecorderRef.current) {
+      const success = await voiceRecorderRef.current.startRecording();
+      if (success) {
+        setIsRecording(true);
+        setSeconds(0);
+      }
+    }
+  };
+
+  const stopRecording = async () => {
+    if (voiceRecorderRef.current) {
+      setIsRecording(false);
+      const blob = await voiceRecorderRef.current.stopRecording();
+      setRecordedBlob(blob);
+    }
+  };
+
+  const formatTime = (totalSeconds: number): string => {
+    const minutes = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${String(minutes).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
   };
 
   // Находим последнее сообщение ассистента
@@ -46,6 +107,17 @@ export default function ChatContent() {
                   className={`${styles.message} ${message.role === 'User' ? styles.userMessage : styles.assistantMessage}`}
                 >
                   {message.content}
+                  {message.image_url && (
+                    <div className={styles.messageImage}>
+                      <Image
+                        src={message.image_url}
+                        alt="Прикрепленное изображение"
+                        width={200}
+                        height={200}
+                        style={{ objectFit: 'contain' }}
+                      />
+                    </div>
+                  )}
                 </div>
                 {message.role === 'Assistant' && message.id !== 'welcome' && (
                   <div className={styles.feedbackContainer}>
@@ -103,13 +175,41 @@ export default function ChatContent() {
             placeholder="Введите сообщение..."
             className={styles.input}
           />
-          <button onClick={handleSendMessage} className={styles.sendButton}>
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept="image/*"
+            onChange={handleImageSelect}
+            style={{ display: 'none' }}
+          />
+          <button
+            className={`${styles.imageButton} ${selectedImage ? styles.active : ''}`}
+            onClick={() => fileInputRef.current?.click()}
+          >
             <Image
-              src={inputValue ? "/send.svg" : "/mic-icon.svg"}
-              alt={inputValue ? "Отправить" : "Голосовой ввод"}
-              width={14}
+              src="/image.svg"
+              alt="Прикрепить изображение"
+              width={20}
               height={20}
             />
+          </button>
+          <button
+            onClick={inputValue || selectedImage || recordedBlob ? handleSendMessage : (isRecording ? stopRecording : startRecording)}
+            className={`${styles.sendButton} ${isRecording ? styles.recording : ''}`}
+          >
+            {isRecording ? (
+              <div className={styles.recordingIndicator}>
+                <span className={styles.recordingDot}></span>
+                <span className={styles.recordingTime}>{formatTime(seconds)}</span>
+              </div>
+            ) : (
+              <Image
+                src={inputValue || selectedImage || recordedBlob ? "/send.svg" : "/mic-icon.svg"}
+                alt={inputValue || selectedImage || recordedBlob ? "Отправить" : "Голосовой ввод"}
+                width={14}
+                height={20}
+              />
+            )}
           </button>
         </div>
       </div>

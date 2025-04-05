@@ -85,6 +85,33 @@
   }
 }
 
+.imageButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  &.active {
+    background-color: #E7EEF7;
+    border: 2px solid #264B82;
+    
+    img {
+      filter: brightness(0) saturate(100%) invert(30%) sepia(50%) saturate(2000%) hue-rotate(200deg) brightness(90%) contrast(90%);
+    }
+  }
+}
+
 .sendButton {
   background: none;
   border: none;
@@ -100,6 +127,13 @@
 
   &:hover {
     background-color: rgba(0, 0, 0, 0.05);
+  }
+
+  &.recording {
+    width: auto;
+    height: auto;
+    padding: 5px;
+    border-radius: 5px;
   }
 }
 
@@ -196,5 +230,52 @@
     img {
       filter: brightness(0) saturate(100%) invert(30%) sepia(50%) saturate(2000%) hue-rotate(200deg) brightness(90%) contrast(90%);
     }
+  }
+}
+
+.recordingIndicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.recordingDot {
+  width: 8px;
+  height: 8px;
+  background-color: #ff4444;
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+
+.recordingTime {
+  font-size: 12px;
+  color: #666;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.messageImage {
+  margin-top: 8px;
+  border-radius: 8px;
+  overflow: hidden;
+  max-width: 100%;
+  
+  img {
+    max-width: 100%;
+    height: auto;
+    display: block;
   }
 }

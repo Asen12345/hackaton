@@ -27,11 +27,11 @@ export default function HistoryTags() {
 
   return (
     <div className={styles.historySection}>
-      <p>История запросов</p>
+      {chats.length > 0 && <p>История запросов</p>}
       <div className={styles.tags}>
         {displayedChats.map((chat) => (
-          <span 
-            key={chat.id} 
+          <span
+            key={chat.id}
             className={styles.tag}
             onClick={() => handleTagClick(chat.id)}
           >
@@ -39,8 +39,8 @@ export default function HistoryTags() {
           </span>
         ))}
         {chats.length > 4 && (
-          <span 
-            className={styles.all} 
+          <span
+            className={styles.all}
             onClick={() => setShowAll(!showAll)}
           >
             {showAll ? 'Скрыть' : `Все ${chats.length}`}

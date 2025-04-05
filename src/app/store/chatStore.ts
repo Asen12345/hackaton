@@ -11,6 +11,10 @@ const generateUserId = () => {
 
 // Функция для получения или создания user_id
 const getOrCreateUserId = () => {
+  if (typeof window === 'undefined') {
+    return generateUserId();
+  }
+
   let userId = localStorage.getItem('user_id');
   if (!userId) {
     userId = generateUserId();
@@ -36,6 +40,8 @@ interface Message {
   dislikes: boolean;
   sources: Source[];
   chat_new_name?: string;
+  audio_url?: string;
+  image_url?: string;
 }
 
 interface Chat {
@@ -61,7 +67,7 @@ interface ChatStore {
   createChat: (name: string) => Promise<Chat>;
   deleteChat: (chatId: string) => Promise<void>;
   fetchMessages: (chatId: string) => Promise<void>;
-  sendMessage: (chatId: string, content: string) => Promise<Message>;
+  sendMessage: (chatId: string, content: string, imageFile?: File, audioBlob?: Blob) => Promise<Message>;
   likeMessage: (messageId: string) => Promise<void>;
   dislikeMessage: (messageId: string) => Promise<void>;
   setCurrentChatId: (chatId: string | null) => void;
@@ -86,7 +92,7 @@ export const useChatStore = create<ChatStorePersist>()(
 
       fetchChats: debounce(async () => {
         if (get().loading) return;
-        
+
         set({ loading: true, error: null });
         try {
           const userId = getOrCreateUserId();
@@ -110,12 +116,12 @@ export const useChatStore = create<ChatStorePersist>()(
             },
             body: JSON.stringify({ name, user_id: userId }),
           });
-          
+
           if (response.status === 400) {
             const errorData: ErrorResponse = await response.json();
             throw new Error(errorData.detail);
           }
-          
+
           if (!response.ok) throw new Error('Failed to create chat');
           const data = await response.json();
           const newChat = data.chat;
@@ -133,12 +139,12 @@ export const useChatStore = create<ChatStorePersist>()(
           const response = await fetch(`${API_URL}/chats/${chatId}`, {
             method: 'DELETE',
           });
-          
+
           if (response.status === 400) {
             const errorData: ErrorResponse = await response.json();
             throw new Error(errorData.detail);
           }
-          
+
           if (!response.ok) throw new Error('Failed to delete chat');
           set((state) => ({
             chats: state.chats.filter((chat) => chat.id !== chatId),
@@ -153,17 +159,17 @@ export const useChatStore = create<ChatStorePersist>()(
         set({ loading: true, error: null });
         try {
           const response = await fetch(`${API_URL}/chats/${chatId}/messages`);
-          
+
           if (response.status === 400) {
             const errorData: ErrorResponse = await response.json();
             throw new Error(errorData.detail);
           }
-          
+
           if (!response.ok) throw new Error('Failed to fetch messages');
           const messages = await response.json();
-          
+
           set((state) => ({
-            chats: state.chats.map((chat) => 
+            chats: state.chats.map((chat) =>
               chat.id === chatId ? { ...chat, messages } : chat
             ),
             loading: false
@@ -173,14 +179,21 @@ export const useChatStore = create<ChatStorePersist>()(
         }
       },
 
-      sendMessage: async (chatId: string, content: string) => {
+      sendMessage: async (chatId: string, content: string, imageFile?: File, audioBlob?: Blob) => {
         set({ loading: true, error: null });
         try {
+          let messageContent = content;
+          if (audioBlob) {
+            messageContent = content ? `${content} (Голосовое сообщение)` : "Голосовое сообщение";
+          } else if (imageFile) {
+            messageContent = content ? `${content} (Изображение)` : "Изображение";
+          }
+ 
           // Создаем временное сообщение пользователя
           const userMessage: Message = {
             id: `temp-${Date.now()}`,
             chat_id: chatId,
-            content,
+            content: messageContent,
             role: 'User',
             timestamp: new Date().toISOString(),
             likes: false,
@@ -190,40 +203,68 @@ export const useChatStore = create<ChatStorePersist>()(
 
           // Добавляем сообщение пользователя в состояние
           set((state) => ({
-            chats: state.chats.map((chat) => 
-              chat.id === chatId 
-                ? { 
-                    ...chat, 
-                    messages: [...(chat.messages || []), userMessage] 
-                  } 
+            chats: state.chats.map((chat) =>
+              chat.id === chatId
+                ? {
+                  ...chat,
+                  messages: [...(chat.messages || []), userMessage]
+                }
                 : chat
             )
           }));
+
+          const requestBody: any = {
+            content: messageContent
+          };
+
+          if (imageFile) {
+            const reader = new FileReader();
+            reader.readAsDataURL(imageFile);
+            const base64Data = await new Promise<string>((resolve) => {
+              reader.onloadend = () => {
+                const base64String = reader.result as string;
+                resolve(base64String);
+              };
+            });
+            requestBody.image_base64 = base64Data;
+          }
+
+          if (audioBlob) {
+            const reader = new FileReader();
+            reader.readAsDataURL(audioBlob);
+            const base64Data = await new Promise<string>((resolve) => {
+              reader.onloadend = () => {
+                const base64String = reader.result as string;
+                resolve(base64String);
+              };
+            });
+            requestBody.audio_base64 = base64Data;
+          }
 
           const response = await fetch(`${API_URL}/chats/${chatId}/messages`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ content }),
+            body: JSON.stringify(requestBody),
           });
-          
+
           if (response.status === 400) {
             const errorData: ErrorResponse = await response.json();
             throw new Error(errorData.detail);
           }
-          
+
           if (response.status !== 201) throw new Error('Failed to send message');
           const newMessage = await response.json();
-          
+
           // Обновляем состояние с ответом ассистента
           set((state) => ({
-            chats: state.chats.map((chat) => 
-              chat.id === chatId 
-                ? { 
-                    ...chat, 
-                    messages: [...(chat.messages || []), newMessage] 
-                  } 
+            chats: state.chats.map((chat) =>
+              chat.id === chatId
+                ? {
+                  ...chat,
+                  messages: [...(chat.messages || []), newMessage]
+                }
                 : chat
             ),
             loading: false
@@ -234,12 +275,12 @@ export const useChatStore = create<ChatStorePersist>()(
           set({ error: error instanceof Error ? error.message : 'Unknown error', loading: false });
           // Удаляем временное сообщение пользователя в случае ошибки
           set((state) => ({
-            chats: state.chats.map((chat) => 
-              chat.id === chatId 
-                ? { 
-                    ...chat, 
-                    messages: chat.messages?.filter(msg => msg.id !== `temp-${Date.now()}`) || [] 
-                  } 
+            chats: state.chats.map((chat) =>
+              chat.id === chatId
+                ? {
+                  ...chat,
+                  messages: chat.messages?.filter(msg => msg.id !== `temp-${Date.now()}`) || []
+                }
                 : chat
             )
           }));
@@ -253,14 +294,14 @@ export const useChatStore = create<ChatStorePersist>()(
           const response = await fetch(`${API_URL}/messages/${messageId}/like`, {
             method: 'PUT',
           });
-          
+
           if (response.status === 400) {
             const errorData: ErrorResponse = await response.json();
             throw new Error(errorData.detail);
           }
-          
+
           if (!response.ok) throw new Error('Failed to like message');
-          
+
           // Обновляем состояние сообщения в хранилище
           set((state) => ({
             chats: state.chats.map((chat) => ({
@@ -284,14 +325,14 @@ export const useChatStore = create<ChatStorePersist>()(
           const response = await fetch(`${API_URL}/messages/${messageId}/dislike`, {
             method: 'PUT',
           });
-          
+
           if (response.status === 400) {
             const errorData: ErrorResponse = await response.json();
             throw new Error(errorData.detail);
           }
-          
+
           if (!response.ok) throw new Error('Failed to dislike message');
-          
+
           // Обновляем состояние сообщения в хранилище
           set((state) => ({
             chats: state.chats.map((chat) => ({
@@ -319,14 +360,14 @@ export const useChatStore = create<ChatStorePersist>()(
             },
             body: JSON.stringify({ name }),
           });
-          
+
           if (response.status === 400) {
             const errorData: ErrorResponse = await response.json();
             throw new Error(errorData.detail);
           }
-          
+
           if (!response.ok) throw new Error('Failed to rename chat');
-          
+
           set((state) => ({
             chats: state.chats.map((chat) =>
               chat.id === chatId ? { ...chat, name } : chat
@@ -340,7 +381,16 @@ export const useChatStore = create<ChatStorePersist>()(
     }),
     {
       name: 'chat-storage',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => {
+        if (typeof window === 'undefined') {
+          return {
+            getItem: () => null,
+            setItem: () => { },
+            removeItem: () => { }
+          };
+        }
+        return localStorage;
+      }),
       partialize: (state) => ({ chats: state.chats }),
       onRehydrateStorage: () => (state) => {
         if (state) {
