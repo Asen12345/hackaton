@@ -23,12 +23,13 @@ export default function SearchBar() {
         id: 'welcome',
         chat_id: newChat.id,
         content: "Привет! Я твой помощник. Задай любой вопрос и я найду оптимальное решение",
+        role: 'Assistant' as const,
         is_user: false,
         timestamp: new Date().toISOString(),
         likes: false,
         dislikes: false,
         sources: [],
-        chat_new_name: null
+        chat_new_name: undefined
       };
       const updateChats = useChatStore.getState().chats.map((chat) => 
         chat.id === newChat.id 

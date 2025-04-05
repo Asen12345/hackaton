@@ -9,6 +9,7 @@ export default function HistoryTags() {
   const { chats, fetchChats, fetchMessages, setCurrentChatId } = useChatStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     fetchChats();
@@ -26,11 +27,13 @@ export default function HistoryTags() {
     setSelectedChatId(null);
   };
 
+  const displayedChats = showAll ? chats : chats.slice(0, 4);
+
   return (
     <div className={styles.historySection}>
       <p>История запросов</p>
       <div className={styles.tags}>
-        {chats.map((chat) => (
+        {displayedChats.map((chat) => (
           <span 
             key={chat.id} 
             className={styles.tag}
@@ -39,7 +42,14 @@ export default function HistoryTags() {
             {chat.name}
           </span>
         ))}
-        <span className={styles.all}>Все {chats.length}</span>
+        {chats.length > 4 && (
+          <span 
+            className={styles.all} 
+            onClick={() => setShowAll(!showAll)}
+          >
+            {showAll ? 'Скрыть' : `Все ${chats.length}`}
+          </span>
+        )}
       </div>
 
       <Modal isOpen={isModalOpen} onClose={handleCloseModal}>

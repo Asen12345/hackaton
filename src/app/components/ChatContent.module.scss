@@ -179,4 +179,10 @@
   &:hover {
     background-color: rgba(0, 0, 0, 0.05);
   }
+
+  &.active {
+    img {
+      filter: brightness(0) saturate(100%) invert(30%) sepia(50%) saturate(2000%) hue-rotate(200deg) brightness(90%) contrast(90%);
+    }
+  }
 }

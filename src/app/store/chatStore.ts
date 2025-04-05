@@ -1,6 +1,23 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+// Функция для генерации случайного user_id
+const generateUserId = () => {
+  return Math.random().toString(36).substring(2) + Date.now().toString(36);
+};
+
+// Функция для получения или создания user_id
+const getOrCreateUserId = () => {
+  let userId = localStorage.getItem('user_id');
+  if (!userId) {
+    userId = generateUserId();
+    localStorage.setItem('user_id', userId);
+  }
+  return userId;
+};
+
 interface Source {
   id: string;
   title: string;
@@ -12,12 +29,12 @@ interface Message {
   id: string;
   chat_id: string;
   content: string;
-  is_user: boolean;
+  role: 'User' | 'Assistant';
   timestamp: string;
   likes: boolean;
   dislikes: boolean;
   sources: Source[];
-  chat_new_name: string | null;
+  chat_new_name?: string;
 }
 
 interface Chat {
@@ -38,14 +55,16 @@ interface ChatStore {
   loading: boolean;
   error: string | null;
   currentChatId: string | null;
+  userId: string;
   fetchChats: () => Promise<void>;
   createChat: (name: string) => Promise<Chat>;
   deleteChat: (chatId: string) => Promise<void>;
   fetchMessages: (chatId: string) => Promise<void>;
-  sendMessage: (chatId: string, content: string) => Promise<void>;
+  sendMessage: (chatId: string, content: string) => Promise<Message>;
   likeMessage: (messageId: string) => Promise<void>;
   dislikeMessage: (messageId: string) => Promise<void>;
   setCurrentChatId: (chatId: string | null) => void;
+  renameChat: (chatId: string, name: string) => Promise<void>;
 }
 
 type ChatStorePersist = ChatStore & {
@@ -59,6 +78,7 @@ export const useChatStore = create<ChatStorePersist>()(
       loading: false,
       error: null,
       currentChatId: null,
+      userId: getOrCreateUserId(),
       _hasHydrated: false,
 
       setCurrentChatId: (chatId: string | null) => set({ currentChatId: chatId }),
@@ -66,7 +86,8 @@ export const useChatStore = create<ChatStorePersist>()(
       fetchChats: async () => {
         set({ loading: true, error: null });
         try {
-          const response = await fetch('http://wtfvibe.ru:8008/chats');
+          const userId = getOrCreateUserId();
+          const response = await fetch(`${API_URL}/chats?user_id=${userId}`);
           if (!response.ok) throw new Error('Failed to fetch chats');
           const data = await response.json();
           set({ chats: data, loading: false });
@@ -78,12 +99,13 @@ export const useChatStore = create<ChatStorePersist>()(
       createChat: async (name: string) => {
         set({ loading: true, error: null });
         try {
-          const response = await fetch('http://wtfvibe.ru:8008/chats', {
+          const userId = getOrCreateUserId();
+          const response = await fetch(`${API_URL}/chats`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ name }),
+            body: JSON.stringify({ name, user_id: userId }),
           });
           
           if (response.status === 400) {
@@ -105,7 +127,7 @@ export const useChatStore = create<ChatStorePersist>()(
       deleteChat: async (chatId: string) => {
         set({ loading: true, error: null });
         try {
-          const response = await fetch(`http://wtfvibe.ru:8008/chats/${chatId}`, {
+          const response = await fetch(`${API_URL}/chats/${chatId}`, {
             method: 'DELETE',
           });
           
@@ -127,7 +149,7 @@ export const useChatStore = create<ChatStorePersist>()(
       fetchMessages: async (chatId: string) => {
         set({ loading: true, error: null });
         try {
-          const response = await fetch(`http://wtfvibe.ru:8008/chats/${chatId}/messages`);
+          const response = await fetch(`${API_URL}/chats/${chatId}/messages`);
           
           if (response.status === 400) {
             const errorData: ErrorResponse = await response.json();
@@ -156,12 +178,11 @@ export const useChatStore = create<ChatStorePersist>()(
             id: `temp-${Date.now()}`,
             chat_id: chatId,
             content,
-            is_user: true,
+            role: 'User',
             timestamp: new Date().toISOString(),
             likes: false,
             dislikes: false,
             sources: [],
-            chat_new_name: null
           };
 
           // Добавляем сообщение пользователя в состояние
@@ -176,8 +197,12 @@ export const useChatStore = create<ChatStorePersist>()(
             )
           }));
 
-          const response = await fetch(`http://wtfvibe.ru:8008/chats/${chatId}/messages?content=${encodeURIComponent(content)}`, {
+          const response = await fetch(`${API_URL}/chats/${chatId}/messages`, {
             method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ content }),
           });
           
           if (response.status === 400) {
@@ -200,6 +225,8 @@ export const useChatStore = create<ChatStorePersist>()(
             ),
             loading: false
           }));
+
+          return newMessage;
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Unknown error', loading: false });
           // Удаляем временное сообщение пользователя в случае ошибки
@@ -213,13 +240,14 @@ export const useChatStore = create<ChatStorePersist>()(
                 : chat
             )
           }));
+          throw error;
         }
       },
 
       likeMessage: async (messageId: string) => {
         set({ loading: true, error: null });
         try {
-          const response = await fetch(`http://wtfvibe.ru:8008/messages/${messageId}/like`, {
+          const response = await fetch(`${API_URL}/messages/${messageId}/like`, {
             method: 'PUT',
           });
           
@@ -250,7 +278,7 @@ export const useChatStore = create<ChatStorePersist>()(
       dislikeMessage: async (messageId: string) => {
         set({ loading: true, error: null });
         try {
-          const response = await fetch(`http://wtfvibe.ru:8008/messages/${messageId}/dislike`, {
+          const response = await fetch(`${API_URL}/messages/${messageId}/dislike`, {
             method: 'PUT',
           });
           
@@ -271,6 +299,35 @@ export const useChatStore = create<ChatStorePersist>()(
                   : message
               ),
             })),
+            loading: false,
+          }));
+        } catch (error) {
+          set({ error: error instanceof Error ? error.message : 'Unknown error', loading: false });
+        }
+      },
+
+      renameChat: async (chatId: string, name: string) => {
+        set({ loading: true, error: null });
+        try {
+          const response = await fetch(`${API_URL}/chats/${chatId}/rename`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name }),
+          });
+          
+          if (response.status === 400) {
+            const errorData: ErrorResponse = await response.json();
+            throw new Error(errorData.detail);
+          }
+          
+          if (!response.ok) throw new Error('Failed to rename chat');
+          
+          set((state) => ({
+            chats: state.chats.map((chat) =>
+              chat.id === chatId ? { ...chat, name } : chat
+            ),
             loading: false,
           }));
         } catch (error) {
