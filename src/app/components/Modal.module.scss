@@ -9,6 +9,16 @@
   justify-content: center;
   align-items: center;
   z-index: 1000;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .modalContent {
@@ -19,6 +29,26 @@
   width: calc(100% - 40px);
   height: calc(100% - 40px);
   overflow-y: auto;
+  animation: modalAppear 0.6s ease forwards;
+  transform-origin: center;
+}
+
+@keyframes modalAppear {
+  0% {
+    transform: scale(0.1, 0);
+    width: 30px;
+    opacity: 0;
+  }
+  50% {
+    transform: scale(0.1, 1);
+    width: 30px;
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1, 1);
+    width: calc(100% - 40px);
+    opacity: 1;
+  }
 }
 
 .closeButton {

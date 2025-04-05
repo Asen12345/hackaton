@@ -1,5 +1,5 @@
 import styles from './ChatContent.module.scss';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import { useChatStore } from '../store/chatStore';
 
@@ -8,28 +8,6 @@ export default function ChatContent() {
   const { chats, loading, error, sendMessage, likeMessage, dislikeMessage } = useChatStore();
   const currentChatId = useChatStore((state) => state.currentChatId);
   const currentChat = chats.find(chat => chat.id === currentChatId);
-
-  useEffect(() => {
-    if (currentChat && (!currentChat.messages || currentChat.messages.length === 0)) {
-      const welcomeMessage = {
-        id: 'welcome',
-        chat_id: currentChat.id,
-        content: "Привет! Я твой помощник. Задай любой вопрос и я найду оптимальное решение",
-        is_user: false,
-        timestamp: new Date().toISOString(),
-        likes: false,
-        dislikes: false,
-        sources: [],
-        chat_new_name: null
-      };
-      
-      if (!currentChat.messages) {
-        currentChat.messages = [welcomeMessage];
-      } else {
-        currentChat.messages.push(welcomeMessage);
-      }
-    }
-  }, [currentChat]);
 
   const handleSendMessage = async () => {
     if (inputValue.trim() && currentChat) {
@@ -43,6 +21,12 @@ export default function ChatContent() {
       handleSendMessage();
     }
   };
+
+  // Находим последнее сообщение ассистента
+  const lastAssistantMessage = currentChat?.messages
+    ?.slice()
+    .reverse()
+    .find(message => !message.is_user && message.id !== 'welcome');
 
   return (
     <div className={styles.chatModal}>
@@ -74,6 +58,33 @@ export default function ChatContent() {
             </div>
           ))}
         </div>
+        {lastAssistantMessage?.sources && lastAssistantMessage.sources.length > 0 && (
+          <div className={styles.sourcesContainer}>
+            {lastAssistantMessage.sources.map((source) => (
+              <div key={source.id} className={styles.sourceItem}>
+                <a 
+                  href={source.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className={styles.sourceTitle}
+                >
+                  {source.title}
+                </a>
+                <div className={styles.sourceInfo}>
+                  <Image 
+                    src="/exclamation-circle.svg" 
+                    alt="Информация" 
+                    width={16} 
+                    height={16} 
+                  />
+                  <div className={styles.sourceTooltip}>
+                    {source.text}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
         <div className={styles.inputContainer}>
           <input
             type="text"
@@ -84,7 +95,12 @@ export default function ChatContent() {
             className={styles.input}
           />
           <button onClick={handleSendMessage} className={styles.sendButton}>
-            <Image src="/mic-icon.svg" alt="Voice Input" width={14} height={20} />
+            <Image 
+              src={inputValue ? "/send.svg" : "/mic-icon.svg"} 
+              alt={inputValue ? "Отправить" : "Голосовой ввод"} 
+              width={14} 
+              height={20} 
+            />
           </button>
         </div>
       </div>

@@ -7,6 +7,7 @@ import { useChatStore } from '../store/chatStore';
 
 export default function SearchBar() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchText, setSearchText] = useState('');
   const createChat = useChatStore((state) => state.createChat);
   const deleteChat = useChatStore((state) => state.deleteChat);
   const setCurrentChatId = useChatStore((state) => state.setCurrentChatId);
@@ -17,10 +18,21 @@ export default function SearchBar() {
       const randomName = `Чат ${Math.floor(Math.random() * 1000)}`;
       const newChat = await createChat(randomName);
       setCurrentChatId(newChat.id);
-      // Очищаем сообщения для нового чата
+      // Добавляем приветственное сообщение сразу при создании чата
+      const welcomeMessage = {
+        id: 'welcome',
+        chat_id: newChat.id,
+        content: "Привет! Я твой помощник. Задай любой вопрос и я найду оптимальное решение",
+        is_user: false,
+        timestamp: new Date().toISOString(),
+        likes: false,
+        dislikes: false,
+        sources: [],
+        chat_new_name: null
+      };
       const updateChats = useChatStore.getState().chats.map((chat) => 
         chat.id === newChat.id 
-          ? { ...chat, messages: [] }
+          ? { ...chat, messages: [welcomeMessage] }
           : chat
       );
       useChatStore.setState({ chats: updateChats });
@@ -49,12 +61,19 @@ export default function SearchBar() {
           type="text"
           placeholder="Введите тему или ключевое слово..."
           className={styles.searchInput}
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
         />
         <button className={styles.chatButton} onClick={handleChatButtonClick}>
           Чат с ассистентом
         </button>
         <button className={styles.voiceButton}>
-          <img src="/mic-icon.svg" alt="Voice Input" width={14} height={20} />
+          <img 
+            src={searchText ? "/send.svg" : "/mic-icon.svg"} 
+            alt={searchText ? "Отправить" : "Голосовой ввод"} 
+            width={14} 
+            height={20} 
+          />
         </button>
       </div>
 
