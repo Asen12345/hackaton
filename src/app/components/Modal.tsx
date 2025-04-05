@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styles from './Modal.module.scss';
 
 interface ModalProps {
@@ -8,12 +8,27 @@ interface ModalProps {
 }
 
 export default function Modal({ isOpen, onClose, children }: ModalProps) {
-  if (!isOpen) return null;
+  const [isClosing, setIsClosing] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setIsClosing(false);
+    }
+  }, [isOpen]);
+
+  const handleClose = () => {
+    setIsClosing(true);
+    setTimeout(() => {
+      onClose();
+    }, 600); // Длительность анимации закрытия
+  };
+
+  if (!isOpen && !isClosing) return null;
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
-      <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
-        <button className={styles.closeButton} onClick={onClose}>
+    <div className={`${styles.modalOverlay} ${isClosing ? styles.closing : ''}`} onClick={handleClose}>
+      <div className={`${styles.modalContent} ${isClosing ? styles.closing : ''}`} onClick={e => e.stopPropagation()}>
+        <button className={styles.closeButton} onClick={handleClose}>
           Закрыть
         </button>
         {children}

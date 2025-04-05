@@ -97,7 +97,7 @@ export const useChatStore = create<ChatStorePersist>()(
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Unknown error', loading: false });
         }
-      }, 300),
+      }, 300) as () => Promise<void>,
 
       createChat: async (name: string) => {
         set({ loading: true, error: null });

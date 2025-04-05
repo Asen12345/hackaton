@@ -5,6 +5,12 @@
   width: 900px;
   max-width: 100%;
   margin: 0 auto;
+
+  >img {
+    position: fixed;
+    bottom: 30px;
+    left: calc((100% - 1300px) / 2);
+  }
 }
 
 .chatContent {
@@ -26,7 +32,7 @@
 }
 
 .message {
-  max-width: 70%;
+  max-width: 50%;
   margin-bottom: 10px;
   padding: 10px 15px;
   border-radius: 15px;
@@ -34,6 +40,9 @@
   font-weight: 600;
   font-size: 16px;
   font-family: var(--font-nunito);
+  display: block;
+  clear: both;
+  text-align: left;
 }
 
 .userMessage {
@@ -42,6 +51,7 @@
   color: #FFFFFF;
   border-radius: 12px 12px 2px 12px;
   margin-left: auto;
+  float: right;
 }
 
 .assistantMessage {
@@ -50,6 +60,7 @@
   border-radius: 12px 12px 12px 2px;
   margin-right: auto;
   color: #09090B;
+  float: left;
 }
 
 .inputContainer {
@@ -97,6 +108,7 @@
   gap: 8px;
   margin-left: 20px;
   margin-bottom: 10px;
+  clear: both;
 }
 
 .sourcesContainer {

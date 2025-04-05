@@ -1,4 +1,4 @@
-@import '../styles/variables.scss';
+@use '../styles/variables.scss' as *;
 
 // Переменные отступов
 $spacing-sm: 12px;
@@ -46,6 +46,13 @@ $nav-bg-color: #fff;
     flex-direction: column;
     align-items: center;
     gap: $spacing-xl;
+    position: relative;
+
+    >img {
+      left: calc((100% - 1250px) / 2);
+      position: absolute;
+      top: 0;
+    }
   }
 
   .navContainer {

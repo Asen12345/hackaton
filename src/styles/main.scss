@@ -1,5 +1,5 @@
-@import 'variables';
-@import 'fonts';
+@use 'variables' as *;
+@use 'fonts' as *;
 
 // Базовые стили
 body {
@@ -80,4 +80,9 @@ body {
       background-color: darken($secondary-color, 10%);
     }
   }
+}
+
+.ScrollbarsCustom-Content {
+  display: flex;
+  align-items: flex-end;
 }
