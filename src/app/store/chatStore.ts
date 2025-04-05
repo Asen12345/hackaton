@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import { debounce } from 'lodash';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -73,7 +74,7 @@ type ChatStorePersist = ChatStore & {
 
 export const useChatStore = create<ChatStorePersist>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       chats: [],
       loading: false,
       error: null,
@@ -83,7 +84,9 @@ export const useChatStore = create<ChatStorePersist>()(
 
       setCurrentChatId: (chatId: string | null) => set({ currentChatId: chatId }),
 
-      fetchChats: async () => {
+      fetchChats: debounce(async () => {
+        if (get().loading) return;
+        
         set({ loading: true, error: null });
         try {
           const userId = getOrCreateUserId();
@@ -94,7 +97,7 @@ export const useChatStore = create<ChatStorePersist>()(
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Unknown error', loading: false });
         }
-      },
+      }, 300),
 
       createChat: async (name: string) => {
         set({ loading: true, error: null });
@@ -340,7 +343,9 @@ export const useChatStore = create<ChatStorePersist>()(
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ chats: state.chats }),
       onRehydrateStorage: () => (state) => {
-        state?._hasHydrated && (state._hasHydrated = true);
+        if (state) {
+          state._hasHydrated = true;
+        }
       },
     }
   )

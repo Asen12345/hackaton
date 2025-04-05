@@ -1,38 +1,13 @@
 import styles from './ChatContent.module.scss';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import { useChatStore } from '../store/chatStore';
 
 export default function ChatContent() {
   const [inputValue, setInputValue] = useState('');
-  const { chats, loading, error, sendMessage, likeMessage, dislikeMessage, createChat, renameChat, deleteChat } = useChatStore();
+  const { chats, loading, error, sendMessage, likeMessage, dislikeMessage, renameChat } = useChatStore();
   const currentChatId = useChatStore((state) => state.currentChatId);
   const currentChat = chats.find(chat => chat.id === currentChatId);
-
-  useEffect(() => {
-    const initializeChat = async () => {
-      if (!currentChatId) {
-        const newChat = await createChat('Новый чат');
-        useChatStore.getState().setCurrentChatId(newChat.id);
-      }
-    };
-    initializeChat();
-  }, [currentChatId, createChat]);
-
-  // Функция для проверки и удаления пустого чата
-  const checkAndDeleteEmptyChat = async () => {
-    if (currentChat && (!currentChat.messages || currentChat.messages.length === 0)) {
-      await deleteChat(currentChat.id);
-      useChatStore.getState().setCurrentChatId(null);
-    }
-  };
-
-  // Добавляем обработчик закрытия
-  useEffect(() => {
-    return () => {
-      checkAndDeleteEmptyChat();
-    };
-  }, [currentChat]);
 
   const handleSendMessage = async () => {
     if (inputValue.trim() && currentChat) {

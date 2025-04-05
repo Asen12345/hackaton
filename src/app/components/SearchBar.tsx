@@ -12,6 +12,7 @@ export default function SearchBar() {
   const deleteChat = useChatStore((state) => state.deleteChat);
   const setCurrentChatId = useChatStore((state) => state.setCurrentChatId);
   const chats = useChatStore((state) => state.chats);
+  const currentChatId = useChatStore((state) => state.currentChatId);
 
   const handleChatButtonClick = async () => {
     try {
@@ -44,10 +45,12 @@ export default function SearchBar() {
   };
 
   const handleCloseModal = () => {
-    const currentChatId = useChatStore.getState().currentChatId;
     if (currentChatId) {
       const currentChat = chats.find(chat => chat.id === currentChatId);
-      if (currentChat && (!currentChat.messages || currentChat.messages.length === 0)) {
+      // Проверяем, что в чате нет сообщений или только приветственное сообщение
+      if (currentChat && (!currentChat.messages || 
+          currentChat.messages.length === 0 || 
+          (currentChat.messages.length === 1 && currentChat.messages[0].id === 'welcome'))) {
         deleteChat(currentChatId);
       }
       setCurrentChatId(null);

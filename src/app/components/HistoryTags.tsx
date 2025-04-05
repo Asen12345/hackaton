@@ -1,19 +1,15 @@
 "use client";
 import styles from './HistoryTags.module.scss';
 import { useChatStore } from '../store/chatStore';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Modal from './Modal';
 import ChatContent from './ChatContent';
 
 export default function HistoryTags() {
-  const { chats, fetchChats, fetchMessages, setCurrentChatId } = useChatStore();
+  const { chats, fetchMessages, setCurrentChatId } = useChatStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
-
-  useEffect(() => {
-    fetchChats();
-  }, [fetchChats]);
 
   const handleTagClick = async (chatId: string) => {
     setSelectedChatId(chatId);
