@@ -1,0 +1,67 @@
+@import '../styles/variables.scss';
+
+// Переменные отступов
+$spacing-sm: 12px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+
+// Переменные цветов
+$nav-bg-color: #fff;
+
+.main {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: $spacing-xl;
+  background-color: $nav-bg-color;
+}
+
+.navigation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: calc(100% - 40px);
+  margin-top: $spacing-xl;
+  background: linear-gradient(180deg, rgba(230, 240, 255, 0.4) 40%, rgba(227, 238, 254, 0.25) 40%);
+  border-radius: 32px;
+  padding: 32px 0;
+
+  .logo {
+    margin-bottom: $spacing-xl;
+
+    img {
+      filter: hue-rotate(200deg);
+
+      @media (prefers-color-scheme: dark) {
+        filter: invert(1);
+      }
+    }
+  }
+
+  .navLinks {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $spacing-xl;
+  }
+
+  .navContainer {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: $spacing-sm;
+    width: 800px;
+    max-width: 100%;
+    padding: 0 $spacing-xl;
+  }
+}
+
+// Медиа-запросы
+@media (max-width: 600px) {
+  .main {
+    padding: $spacing-lg;
+  }
+}

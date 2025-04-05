@@ -1,0 +1,56 @@
+@import '../../styles/variables.scss';
+
+// Переменные отступов
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+
+// Переменные шрифтов
+$font-size-md: 16px;
+
+// Переменные цветов
+$nav-link-color: #264B82;
+$nav-hover-bg: rgba(26, 115, 232, 0.1);
+
+.content {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xl;
+}
+
+.topNav {
+  display: flex;
+  gap: $spacing-xl;
+}
+
+.navLink {
+  color: $nav-link-color;
+  text-decoration: none;
+  font-size: $font-size-md;
+  font-weight: 600;
+  background: #FFFFFF;
+  padding: $spacing-md 0 $spacing-md 0;
+  text-align: center;
+  flex: 25%;
+  border-radius: 8px;
+  transition: background-color 0.2s;
+
+  &:hover {
+    background-color: $nav-hover-bg;
+  }
+}
+
+
+// Медиа-запросы
+@media (max-width: $breakpoint-sm) {
+  .navigation {
+    .topNav {
+      flex-direction: column;
+      align-items: center;
+      gap: $spacing-md;
+    }
+  }
+}

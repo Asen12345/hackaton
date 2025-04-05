@@ -1,0 +1,56 @@
+@import '../../styles/variables.scss';
+
+// Переменные отступов
+$spacing-sm: 8px;
+$spacing-md: 16px;
+
+// Переменные цветов
+$nav-text-color: #424242;
+$nav-tag-color: #264B82;
+$nav-border-color: #dfe1e5;
+$light-color: #f1f3f4;
+
+.historySection {
+  text-align: center;
+  width: 100%;
+
+  p {
+    color: $nav-text-color;
+    margin-bottom: $spacing-sm;
+    text-align: left;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--font-nunito);
+  }
+
+  .tags {
+    display: flex;
+    gap: $spacing-md;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    align-items: center;
+  }
+
+  .all {
+    color: #264B82;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .tag {
+    background-color: rgba($color: #000000, $alpha: 0);
+    padding: $spacing-sm $spacing-md;
+    border-radius: 16px;
+    border: 1px solid $nav-border-color;
+    color: rgba($color: $nav-tag-color, $alpha: 0.5);
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 14px;
+    font-weight: 600;
+
+    &:hover {
+      background-color: rgb(222.5, 236.4285714286, 255);
+    }
+  }
+}

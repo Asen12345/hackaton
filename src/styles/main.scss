@@ -1,0 +1,83 @@
+@import 'variables';
+@import 'fonts';
+
+// Базовые стили
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-open-sans), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+  background-color: #FFFFFF;
+}
+
+// Миксины
+@mixin flex-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@mixin responsive($breakpoint) {
+  @if $breakpoint ==sm {
+    @media (min-width: $breakpoint-sm) {
+      @content;
+    }
+  }
+
+  @if $breakpoint ==md {
+    @media (min-width: $breakpoint-md) {
+      @content;
+    }
+  }
+
+  @if $breakpoint ==lg {
+    @media (min-width: $breakpoint-lg) {
+      @content;
+    }
+  }
+
+  @if $breakpoint ==xl {
+    @media (min-width: $breakpoint-xl) {
+      @content;
+    }
+  }
+}
+
+// Общие стили компонентов
+.container {
+  padding: $spacing-md;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  @include responsive(md) {
+    padding: $spacing-lg;
+  }
+}
+
+.button {
+  padding: $spacing-sm $spacing-md;
+  border-radius: 4px;
+  font-size: $font-size-md;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &-primary {
+    background-color: $primary-color;
+    color: white;
+    border: none;
+
+    &:hover {
+      background-color: darken($primary-color, 10%);
+    }
+  }
+
+  &-secondary {
+    background-color: $secondary-color;
+    color: white;
+    border: none;
+
+    &:hover {
+      background-color: darken($secondary-color, 10%);
+    }
+  }
+}

@@ -1,0 +1,81 @@
+@import '../../styles/variables.scss';
+
+// Переменные отступов
+$spacing-sm: 8px;
+$spacing-md: 16px;
+
+// Переменные шрифтов
+$font-size-md: 16px;
+
+// Переменные цветов
+$nav-border-color: #dfe1e5;
+$nav-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+
+.searchSection {
+  width: 100%;
+}
+
+.searchContainer {
+  display: flex;
+  align-items: center;
+  background: white;
+  border: 2px solid $nav-border-color;
+  border-radius: 8px;
+  padding: $spacing-sm $spacing-md;
+}
+
+.searchInput {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-size: $font-size-md;
+  padding: $spacing-sm;
+
+  font-family: var(--font-nunito);
+
+  &::placeholder {
+    font-family: var(--font-nunito);
+  }
+}
+
+.voiceButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+}
+
+.chatButton {
+  background-color: #F8FBFF;
+  border: none;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 24px;
+  color: #264B82;
+  font-weight: 600;
+  font-size: 14px;
+  margin-right: 8px;
+  transition: background-color 0.2s;
+  font-family: var(--font-open-sans);
+
+  &:hover {
+    background-color: darken(#F8FBFF, 5%);
+  }
+}
+
+// Медиа-запросы
+@media (max-width: $breakpoint-sm) {
+  .searchSection {
+    max-width: 100%;
+  }
+}

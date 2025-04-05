@@ -1,0 +1,226 @@
+// Переменные отступов
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+$spacing-md: 16px;
+$spacing-lg: 24px;
+$spacing-xl: 32px;
+
+// Переменные шрифтов
+$font-size-sm: 14px;
+$font-size-md: 16px;
+$font-size-lg: 18px;
+
+// Переменные цветов
+$nav-text-color: #5f6368;
+$nav-link-color: #264B82;
+$nav-border-color: #dfe1e5;
+$nav-bg-color: #fff;
+$nav-hover-bg: rgba(26, 115, 232, 0.1);
+$nav-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+$light-color: #f1f3f4;
+
+// Переменные брейкпоинтов
+$breakpoint-sm: 576px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 992px;
+$breakpoint-xl: 1200px;
+
+// Миксин для медиа-запросов
+@mixin responsive($breakpoint) {
+  @if $breakpoint ==sm {
+    @media (max-width: $breakpoint-sm) {
+      @content;
+    }
+  }
+
+  @if $breakpoint ==md {
+    @media (max-width: $breakpoint-md) {
+      @content;
+    }
+  }
+
+  @if $breakpoint ==lg {
+    @media (max-width: $breakpoint-lg) {
+      @content;
+    }
+  }
+
+  @if $breakpoint ==xl {
+    @media (max-width: $breakpoint-xl) {
+      @content;
+    }
+  }
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: $spacing-xl;
+  background-color: $nav-bg-color;
+}
+
+.navigation {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: calc(100% - 40px);
+  margin-top: $spacing-xl;
+  background: linear-gradient(180deg, rgba(230, 240, 255, 0.4) 40%, rgba(227, 238, 254, 0.25) 40%);
+  backdrop-filter: blur(32px);
+  border-radius: 32px;
+  padding: 32px 0;
+
+  .logo {
+    margin-bottom: $spacing-xl;
+
+    img {
+      filter: hue-rotate(200deg);
+
+      @media (prefers-color-scheme: dark) {
+        filter: invert(1);
+      }
+    }
+  }
+
+  .navLinks {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: $spacing-xl;
+  }
+
+  .navContainer {
+    display: flex;
+    align-items: flex-start;
+    gap: $spacing-xl;
+    max-width: 1200px;
+    width: 100%;
+    padding: 0 $spacing-xl;
+  }
+
+  .logo {
+    width: 120px;
+    height: auto;
+    flex-shrink: 0;
+  }
+
+  .content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-xl;
+  }
+
+  .topNav {
+    display: flex;
+    gap: $spacing-xl;
+    margin-bottom: $spacing-md;
+  }
+
+  .navLink {
+    color: $nav-link-color;
+    text-decoration: none;
+    font-size: $font-size-md;
+    font-weight: 600;
+    background: #FFFFFF;
+    padding: $spacing-md $spacing-xl;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+
+    &:hover {
+      background-color: $nav-hover-bg;
+    }
+  }
+
+  .searchSection {
+    width: 100%;
+    max-width: 600px;
+  }
+
+  .searchContainer {
+    display: flex;
+    align-items: center;
+    background: white;
+    border: 1px solid $nav-border-color;
+    border-radius: 24px;
+    padding: $spacing-sm $spacing-md;
+    box-shadow: $nav-shadow;
+  }
+
+  .searchInput {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: $font-size-md;
+    padding: $spacing-sm;
+  }
+
+  .voiceButton {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: $spacing-sm;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+  }
+
+  .historySection {
+    text-align: center;
+    margin-top: $spacing-md;
+
+    p {
+      color: $nav-text-color;
+      margin-bottom: $spacing-md;
+    }
+
+    .tags {
+      display: flex;
+      gap: $spacing-md;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .tag {
+      background-color: white;
+      padding: $spacing-sm $spacing-md;
+      border-radius: 16px;
+      border: 1px solid $nav-border-color;
+      color: $nav-text-color;
+      cursor: pointer;
+      transition: background-color 0.2s;
+
+      &:hover {
+        background-color: $light-color;
+      }
+    }
+  }
+}
+
+// Медиа-запросы
+@include responsive(sm) {
+  .navigation {
+    .topNav {
+      flex-direction: column;
+      align-items: center;
+      gap: $spacing-md;
+    }
+
+    .searchSection {
+      max-width: 100%;
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .main {
+    padding: $spacing-lg;
+  }
+}
