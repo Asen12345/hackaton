@@ -23,7 +23,7 @@ export default function HistoryTags() {
     setSelectedChatId(null);
   };
 
-  const displayedChats = showAll ? chats : chats.slice(0, 4);
+  const displayedChats = showAll ? [...chats].reverse() : [...chats].reverse().slice(0, 4);
 
   return (
     <div className={styles.historySection}>
