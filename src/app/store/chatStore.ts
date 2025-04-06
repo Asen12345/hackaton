@@ -251,54 +251,37 @@ export const useChatStore = create<ChatStorePersist>()(
             requestBody.audio_base64 = base64Data;
           }
 
-          let finalMessage: Message | null = null;
-
-          await fetchEventSource(`${API_URL}/chats/${chatId}/messages`, {
+          const response = await fetch(`${API_URL}/chats/${chatId}/messages`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify(requestBody),
-            onmessage(event) {
-              const data = JSON.parse(event.data);
-              
-              switch (event.event) {
-                case 'processing':
-                  // Начало обработки
-                  break;
-                case 'bot_response':
-                  // Обновляем промежуточный контент
-                  set((state) => ({ streamingContent: state.streamingContent + data.content }));
-                  break;
-                case 'complete':
-                  // Финальное сообщение
-                  finalMessage = data;
-                  set((state) => ({
-                    chats: state.chats.map((chat) =>
-                      chat.id === chatId
-                        ? {
-                          ...chat,
-                          messages: [...(chat.messages || []), data]
-                        }
-                        : chat
-                    ),
-                    streamingContent: '',
-                    loading: false
-                  }));
-                  break;
-              }
-            },
-            onerror(err) {
-              set({ error: err instanceof Error ? err.message : 'Unknown error', loading: false });
-              throw err;
-            }
           });
 
-          if (!finalMessage) {
-            throw new Error('No final message received');
+          if (response.status === 400) {
+            const errorData: ErrorResponse = await response.json();
+            throw new Error(errorData.detail);
           }
 
-          return finalMessage;
+          if (!response.ok) throw new Error('Failed to send message');
+          
+          const newMessage = await response.json();
+
+          // Обновляем состояние с ответом ассистента
+          set((state) => ({
+            chats: state.chats.map((chat) =>
+              chat.id === chatId
+                ? {
+                  ...chat,
+                  messages: [...(chat.messages || []), newMessage]
+                }
+                : chat
+            ),
+            loading: false
+          }));
+
+          return newMessage;
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Unknown error', loading: false });
           // Удаляем временное сообщение пользователя в случае ошибки

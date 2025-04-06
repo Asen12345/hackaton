@@ -23,7 +23,9 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${nunito.variable} ${openSans.variable}`}>
       <body>
+        <img src="/top.png" alt="" />
         {children}
+        <img src="/bottom.png" alt="" />
       </body>
     </html>
   );
