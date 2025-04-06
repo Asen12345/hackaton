@@ -14,7 +14,7 @@ export default function ChatContent() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const voiceRecorderRef = useRef<VoiceRecorder | null>(null);
 
-  const { chats, loading, error, sendMessage, likeMessage, dislikeMessage, renameChat } = useChatStore();
+  const { chats, loading, error, sendMessage, likeMessage, dislikeMessage, renameChat, streamingContent } = useChatStore();
   const currentChatId = useChatStore((state) => state.currentChatId);
   const currentChat = chats.find(chat => chat.id === currentChatId);
 
@@ -137,6 +137,12 @@ export default function ChatContent() {
                 )}
               </div>
             ))}
+            {streamingContent && (
+              <div className={`${styles.message} ${styles.assistantMessage} ${styles.streaming}`}>
+                {streamingContent}
+                <span className={styles.cursor}>▋</span>
+              </div>
+            )}
           </div>
           {lastAssistantMessage?.sources && lastAssistantMessage.sources.length > 0 && (
             <div className={styles.sourcesContainer}>

@@ -1,6 +1,10 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { debounce } from 'lodash';
+import {
+  EventStreamContentType,
+  fetchEventSource,
+} from "@fortaine/fetch-event-source";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -63,6 +67,7 @@ interface ChatStore {
   error: string | null;
   currentChatId: string | null;
   userId: string;
+  streamingContent: string;
   fetchChats: () => Promise<void>;
   createChat: (name: string) => Promise<Chat>;
   deleteChat: (chatId: string) => Promise<void>;
@@ -72,6 +77,7 @@ interface ChatStore {
   dislikeMessage: (messageId: string) => Promise<void>;
   setCurrentChatId: (chatId: string | null) => void;
   renameChat: (chatId: string, name: string) => Promise<void>;
+  setStreamingContent: (content: string) => void;
 }
 
 type ChatStorePersist = ChatStore & {
@@ -87,8 +93,11 @@ export const useChatStore = create<ChatStorePersist>()(
       currentChatId: null,
       userId: getOrCreateUserId(),
       _hasHydrated: false,
+      streamingContent: '',
 
       setCurrentChatId: (chatId: string | null) => set({ currentChatId: chatId }),
+
+      setStreamingContent: (content: string) => set({ streamingContent: content }),
 
       fetchChats: debounce(async () => {
         if (get().loading) return;
@@ -180,7 +189,7 @@ export const useChatStore = create<ChatStorePersist>()(
       },
 
       sendMessage: async (chatId: string, content: string, imageFile?: File, audioBlob?: Blob) => {
-        set({ loading: true, error: null });
+        set({ loading: true, error: null, streamingContent: '' });
         try {
           let messageContent = content;
           if (audioBlob) {
@@ -188,7 +197,7 @@ export const useChatStore = create<ChatStorePersist>()(
           } else if (imageFile) {
             messageContent = content ? `${content} (Изображение)` : "Изображение";
           }
- 
+
           // Создаем временное сообщение пользователя
           const userMessage: Message = {
             id: `temp-${Date.now()}`,
@@ -241,36 +250,54 @@ export const useChatStore = create<ChatStorePersist>()(
             requestBody.audio_base64 = base64Data;
           }
 
-          const response = await fetch(`${API_URL}/chats/${chatId}/messages`, {
+          let finalMessage: Message | null = null;
+
+          await fetchEventSource(`${API_URL}/chats/${chatId}/messages`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify(requestBody),
+            onmessage(event) {
+              const data = JSON.parse(event.data);
+              
+              switch (event.event) {
+                case 'processing':
+                  // Начало обработки
+                  break;
+                case 'bot_response':
+                  // Обновляем промежуточный контент
+                  set((state) => ({ streamingContent: state.streamingContent + data.content }));
+                  break;
+                case 'complete':
+                  // Финальное сообщение
+                  finalMessage = data;
+                  set((state) => ({
+                    chats: state.chats.map((chat) =>
+                      chat.id === chatId
+                        ? {
+                          ...chat,
+                          messages: [...(chat.messages || []), data]
+                        }
+                        : chat
+                    ),
+                    streamingContent: '',
+                    loading: false
+                  }));
+                  break;
+              }
+            },
+            onerror(err) {
+              set({ error: err instanceof Error ? err.message : 'Unknown error', loading: false });
+              throw err;
+            }
           });
 
-          if (response.status === 400) {
-            const errorData: ErrorResponse = await response.json();
-            throw new Error(errorData.detail);
+          if (!finalMessage) {
+            throw new Error('No final message received');
           }
 
-          if (response.status !== 201) throw new Error('Failed to send message');
-          const newMessage = await response.json();
-
-          // Обновляем состояние с ответом ассистента
-          set((state) => ({
-            chats: state.chats.map((chat) =>
-              chat.id === chatId
-                ? {
-                  ...chat,
-                  messages: [...(chat.messages || []), newMessage]
-                }
-                : chat
-            ),
-            loading: false
-          }));
-
-          return newMessage;
+          return finalMessage;
         } catch (error) {
           set({ error: error instanceof Error ? error.message : 'Unknown error', loading: false });
           // Удаляем временное сообщение пользователя в случае ошибки
