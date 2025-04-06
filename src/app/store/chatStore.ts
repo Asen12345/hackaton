@@ -46,6 +46,7 @@ interface Message {
   chat_new_name?: string;
   audio_url?: string;
   image_url?: string;
+  support?: boolean;
 }
 
 interface Chat {

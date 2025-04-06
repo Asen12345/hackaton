@@ -45,6 +45,22 @@
   text-align: left;
 }
 
+.supportMessage {
+  max-width: 80%;
+  margin: 20px auto;
+  padding: 15px 20px;
+  border-radius: 15px;
+  word-wrap: break-word;
+  font-weight: 600;
+  font-size: 16px;
+  font-family: var(--font-nunito);
+  display: block;
+  text-align: center;
+  background: #f8f9fa;
+  border: 2px solid #264B82;
+  color: #264B82;
+}
+
 .userMessage {
   background: #264B82;
   border: 2px solid #FFFFFF;

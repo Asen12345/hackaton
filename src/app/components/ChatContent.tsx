@@ -17,6 +17,9 @@ export default function ChatContent() {
   const { chats, loading, error, sendMessage, likeMessage, dislikeMessage, renameChat, streamingContent } = useChatStore();
   const currentChatId = useChatStore((state) => state.currentChatId);
   const currentChat = chats.find(chat => chat.id === currentChatId);
+  
+  // Проверяем, есть ли сообщение с support=true
+  const hasSupportMessage = currentChat?.messages?.some(message => message.support === true);
 
   useEffect(() => {
     voiceRecorderRef.current = new VoiceRecorder(
@@ -143,6 +146,11 @@ export default function ChatContent() {
                 <span className={styles.cursor}>▋</span>
               </div>
             )}
+            {hasSupportMessage && (
+              <div className={styles.supportMessage}>
+                Переключаем ваш диалог на сотрудника. Мы уже занимаемся вашим вопросом, ответим в ближайшее время
+              </div>
+            )}
           </div>
           {lastAssistantMessage?.sources && lastAssistantMessage.sources.length > 0 && (
             <div className={styles.sourcesContainer}>
@@ -180,6 +188,7 @@ export default function ChatContent() {
             onKeyPress={handleKeyPress}
             placeholder="Введите сообщение..."
             className={styles.input}
+            disabled={hasSupportMessage}
           />
           <input
             type="file"
@@ -187,10 +196,12 @@ export default function ChatContent() {
             accept="image/*"
             onChange={handleImageSelect}
             style={{ display: 'none' }}
+            disabled={hasSupportMessage}
           />
           <button
             className={`${styles.imageButton} ${selectedImage ? styles.active : ''}`}
             onClick={() => fileInputRef.current?.click()}
+            disabled={hasSupportMessage}
           >
             <Image
               src="/image.svg"
@@ -202,6 +213,7 @@ export default function ChatContent() {
           <button
             onClick={inputValue || selectedImage || recordedBlob ? handleSendMessage : (isRecording ? stopRecording : startRecording)}
             className={`${styles.sendButton} ${isRecording ? styles.recording : ''}`}
+            disabled={hasSupportMessage}
           >
             {isRecording ? (
               <div className={styles.recordingIndicator}>
