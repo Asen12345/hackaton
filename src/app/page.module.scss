@@ -53,6 +53,8 @@ $nav-bg-color: #fff;
       left: calc((100% - 1250px) / 2);
       position: absolute;
       top: 0;
+      opacity: 0;
+      animation: fadeIn 1s ease-in-out forwards;
     }
   }
 
@@ -71,5 +73,18 @@ $nav-bg-color: #fff;
 @media (max-width: 600px) {
   .main {
     padding: $spacing-lg;
+  }
+}
+
+// Добавляем анимацию появления
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
