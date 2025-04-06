@@ -176,6 +176,11 @@ export default function ChatContent() {
                 <span className={styles.cursor}>▋</span>
               </div>
             )}
+            {isWaitingForResponse && (
+              <div className={`${styles.message} ${styles.assistantMessage} ${styles.loading}`}>
+                <div className={styles.loader}></div>
+              </div>
+            )}
             {hasSupportMessage && (
               <div className={styles.supportMessage}>
                 Переключаем ваш диалог на сотрудника. Мы уже занимаемся вашим вопросом, ответим в ближайшее время
