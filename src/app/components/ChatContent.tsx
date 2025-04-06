@@ -32,7 +32,7 @@ export default function ChatContent() {
   const currentChat = chats.find(chat => chat.id === currentChatId);
   
   // Проверяем, есть ли сообщение с support=true
-  const hasSupportMessage = currentChat?.messages?.some(message => message.support === true);
+  const hasSupportMessage = currentChat?.messages?.some(message => message.content === "Не удалось найти информацию по данному запросу");
 
   useEffect(() => {
     voiceRecorderRef.current = new VoiceRecorder(
