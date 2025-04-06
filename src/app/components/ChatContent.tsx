@@ -5,12 +5,24 @@ import { useChatStore } from '../store/chatStore';
 import { Scrollbar } from 'react-scrollbars-custom';
 import { VoiceRecorder } from '../utils/voiceRecorder';
 
+interface FeedbackFormData {
+  fullName: string;
+  phone: string;
+  email: string;
+}
+
 export default function ChatContent() {
   const [inputValue, setInputValue] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
   const [seconds, setSeconds] = useState(0);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+  const [feedbackFormData, setFeedbackFormData] = useState<FeedbackFormData>({
+    fullName: '',
+    phone: '',
+    email: ''
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
   const voiceRecorderRef = useRef<VoiceRecorder | null>(null);
 
@@ -42,6 +54,12 @@ export default function ChatContent() {
   };
 
   const handleSendMessage = async () => {
+    if (inputValue.trim() === "Верни форму обратной связи") {
+      setShowFeedbackForm(true);
+      setInputValue('');
+      return;
+    }
+
     if ((inputValue.trim() || selectedImage || recordedBlob) && currentChat) {
       const response = await sendMessage(
         currentChat.id, 
@@ -60,6 +78,14 @@ export default function ChatContent() {
         await renameChat(currentChat.id, response.chat_new_name);
       }
     }
+  };
+
+  const handleFeedbackSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Здесь можно добавить логику отправки формы
+    console.log('Отправка формы:', feedbackFormData);
+    setShowFeedbackForm(false);
+    setFeedbackFormData({ fullName: '', phone: '', email: '' });
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -149,6 +175,42 @@ export default function ChatContent() {
             {hasSupportMessage && (
               <div className={styles.supportMessage}>
                 Переключаем ваш диалог на сотрудника. Мы уже занимаемся вашим вопросом, ответим в ближайшее время
+              </div>
+            )}
+            {showFeedbackForm && (
+              <div className={styles.feedbackForm}>
+                <form onSubmit={handleFeedbackSubmit}>
+                  <div className={styles.formGroup}>
+                    <input
+                      type="text"
+                      placeholder="ФИО"
+                      value={feedbackFormData.fullName}
+                      onChange={(e) => setFeedbackFormData({...feedbackFormData, fullName: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <input
+                      type="tel"
+                      placeholder="Номер телефона"
+                      value={feedbackFormData.phone}
+                      onChange={(e) => setFeedbackFormData({...feedbackFormData, phone: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div className={styles.formGroup}>
+                    <input
+                      type="email"
+                      placeholder="Email"
+                      value={feedbackFormData.email}
+                      onChange={(e) => setFeedbackFormData({...feedbackFormData, email: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <button type="submit" className={styles.submitButton}>
+                    Отправить
+                  </button>
+                </form>
               </div>
             )}
           </div>
