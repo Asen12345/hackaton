@@ -18,6 +18,7 @@ export default function ChatContent() {
   const [seconds, setSeconds] = useState(0);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
+  const [isWaitingForResponse, setIsWaitingForResponse] = useState(false);
   const [feedbackFormData, setFeedbackFormData] = useState<FeedbackFormData>({
     fullName: '',
     phone: '',
@@ -61,12 +62,7 @@ export default function ChatContent() {
     }
 
     if ((inputValue.trim() || selectedImage || recordedBlob) && currentChat) {
-      const response = await sendMessage(
-        currentChat.id, 
-        inputValue, 
-        selectedImage || undefined, 
-        recordedBlob || undefined
-      );
+      setIsWaitingForResponse(true);
       setInputValue('');
       setSelectedImage(null);
       setRecordedBlob(null);
@@ -74,9 +70,17 @@ export default function ChatContent() {
         fileInputRef.current.value = '';
       }
 
+      const response = await sendMessage(
+        currentChat.id, 
+        inputValue, 
+        selectedImage || undefined, 
+        recordedBlob || undefined
+      );
+
       if (response && response.chat_new_name) {
         await renameChat(currentChat.id, response.chat_new_name);
       }
+      setIsWaitingForResponse(false);
     }
   };
 
@@ -250,7 +254,7 @@ export default function ChatContent() {
             onKeyPress={handleKeyPress}
             placeholder="Введите сообщение..."
             className={styles.input}
-            disabled={hasSupportMessage}
+            disabled={hasSupportMessage || isWaitingForResponse}
           />
           <input
             type="file"
@@ -258,12 +262,12 @@ export default function ChatContent() {
             accept="image/*"
             onChange={handleImageSelect}
             style={{ display: 'none' }}
-            disabled={hasSupportMessage}
+            disabled={hasSupportMessage || isWaitingForResponse}
           />
           <button
             className={`${styles.imageButton} ${selectedImage ? styles.active : ''}`}
             onClick={() => fileInputRef.current?.click()}
-            disabled={hasSupportMessage}
+            disabled={hasSupportMessage || isWaitingForResponse}
           >
             <Image
               src="/image.svg"
@@ -275,7 +279,7 @@ export default function ChatContent() {
           <button
             onClick={inputValue || selectedImage || recordedBlob ? handleSendMessage : (isRecording ? stopRecording : startRecording)}
             className={`${styles.sendButton} ${isRecording ? styles.recording : ''}`}
-            disabled={hasSupportMessage}
+            disabled={hasSupportMessage || isWaitingForResponse}
           >
             {isRecording ? (
               <div className={styles.recordingIndicator}>

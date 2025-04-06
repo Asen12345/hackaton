@@ -127,6 +127,53 @@ export default function SearchBar() {
     setIsModalOpen(false);
   };
 
+  const handleSendButtonClick = async () => {
+    if (searchText.trim()) {
+      try {
+        const randomName = `Чат ${Math.floor(Math.random() * 1000)}`;
+        const newChat = await createChat(randomName);
+        setCurrentChatId(newChat.id);
+        
+        // Добавляем приветственное сообщение сразу при создании чата
+        const welcomeMessage = {
+          id: 'welcome',
+          chat_id: newChat.id,
+          content: "Привет! Я твой помощник. Задай любой вопрос и я найду оптимальное решение",
+          role: 'Assistant' as const,
+          is_user: false,
+          timestamp: new Date().toISOString(),
+          likes: false,
+          dislikes: false,
+          sources: [],
+          chat_new_name: undefined
+        };
+        
+        const updateChats = useChatStore.getState().chats.map((chat) =>
+          chat.id === newChat.id
+            ? { ...chat, messages: [welcomeMessage] }
+            : chat
+        );
+        useChatStore.setState({ chats: updateChats });
+        
+        // Открываем модальное окно
+        setIsModalOpen(true);
+        
+        // Отправляем сообщение на сервер (функция sendMessage сама добавит сообщение пользователя)
+        const response = await useChatStore.getState().sendMessage(newChat.id, searchText);
+        
+        // Переименовываем чат, если сервер вернул новое имя
+        if (response && response.chat_new_name) {
+          await useChatStore.getState().renameChat(newChat.id, response.chat_new_name);
+        }
+        
+        // Очищаем поле ввода
+        setSearchText('');
+      } catch (error) {
+        console.error('Failed to create chat or send message:', error);
+      }
+    }
+  };
+
   return (
     <div className={styles.searchSection}>
       <div className={styles.searchContainer}>
@@ -140,42 +187,17 @@ export default function SearchBar() {
         <button className={styles.chatButton} onClick={handleChatButtonClick}>
           Чат с ассистентом
         </button>
-        <input
-          type="file"
-          ref={fileInputRef}
-          accept="image/*"
-          onChange={handleImageSelect}
-          style={{ display: 'none' }}
-        />
         <button
-          className={`${styles.imageButton} ${selectedImage ? styles.active : ''}`}
-          onClick={() => fileInputRef.current?.click()}
+          className={`${styles.voiceButton}`}
+          onClick={handleSendButtonClick}
         >
-          <Image
-            src="/image.svg"
-            alt="Прикрепить изображение"
-            width={20}
+          <img
+            src={"/send.svg"}
+            alt={"Отправить"}
+            width={14}
             height={20}
           />
-        </button>
-        <button
-          className={`${styles.voiceButton} ${isRecording ? styles.recording : ''}`}
-          onClick={isRecording ? stopRecording : startRecording}
-        >
-          {isRecording ? (
-            <div className={styles.recordingIndicator}>
-              <span className={styles.recordingDot}></span>
-              <span className={styles.recordingTime}>{formatTime(seconds)}</span>
-            </div>
-          ) : (
-            <img
-              src={searchText ? "/send.svg" : "/mic-icon.svg"}
-              alt={searchText ? "Отправить" : "Голосовой ввод"}
-              width={14}
-              height={20}
-            />
-          )}
-        </button>
+        </button> 
       </div>
 
       <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
